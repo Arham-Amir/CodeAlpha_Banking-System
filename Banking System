@@ -1,0 +1,176 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+class Transaction {
+public:
+    string type;
+    double amount;
+    Transaction(string t, double a) {
+        type = t;
+        amount = a;
+    }
+};
+
+class Account {
+private:
+    double balance;
+    vector<Transaction> history;
+
+public:
+    int accountNumber;
+    Account(int accNum) {
+        accountNumber = accNum;
+        balance = 0.0;
+    }
+
+    void deposit(double amount) {
+        balance += amount;
+        history.push_back(Transaction("Deposit", amount));
+        cout << "Deposited: $" << amount << endl;
+    }
+
+    bool withdraw(double amount) {
+        if (amount > balance) {
+            cout << "Insufficient balance!" << endl;
+            return false;
+        }
+        balance -= amount;
+        history.push_back(Transaction("Withdrawal", amount));
+        cout << "Withdrawn: $" << amount << endl;
+        return true;
+    }
+
+    bool transfer(Account &to, double amount) {
+        if (withdraw(amount)) {
+            to.deposit(amount);
+            history.push_back(Transaction("Transfer to Acc " + to.getAccNumberStr(), amount));
+            cout << "Transferred $" << amount << " to account " << to.accountNumber << endl;
+            return true;
+        }
+        return false;
+    }
+
+    double getBalance() {
+        return balance;
+    }
+
+    void printTransactions() {
+        if(history.empty()){
+            cout << "No transactions yet." << endl;
+            return;
+        }
+        cout << "Transaction History:" << endl;
+        for (auto &t : history) {
+            cout << t.type << " : $" << t.amount << endl;
+        }
+    }
+
+    string getAccNumberStr() {
+        return to_string(accountNumber);
+    }
+};
+
+class Customer {
+public:
+    string name;
+    Account account;
+    Customer(string n, int accNum) : account(accNum) {
+        name = n;
+    }
+
+    void displayInfo() {
+        cout << "Customer Name: " << name << endl;
+        cout << "Account Number: " << account.accountNumber << endl;
+        cout << "Balance: $" << account.getBalance() << endl;
+    }
+};
+
+int main() {
+    vector<Customer> customers;
+    int accountCounter = 1001;
+    int choice;
+
+    while (true) {
+        cout << "\n--- Banking System ---\n";
+        cout << "1. Create Customer Account\n2. Deposit\n3. Withdraw\n4. Transfer\n5. Account Info\n6. Transaction History\n7. Exit\nChoose: ";
+        cin >> choice;
+
+        if (choice == 1) {
+            string name;
+            cout << "Enter Customer Name: ";
+            cin >> ws; // consume any whitespace
+            getline(cin, name);
+            customers.push_back(Customer(name, accountCounter));
+            cout << "Account created with Account Number: " << accountCounter << endl;
+            accountCounter++;
+        } else if (choice == 2) {
+            int accNum;
+            double amount;
+            cout << "Enter Account Number: ";
+            cin >> accNum;
+            cout << "Enter Amount to Deposit: ";
+            cin >> amount;
+            for (auto &c : customers) {
+                if (c.account.accountNumber == accNum) {
+                    c.account.deposit(amount);
+                }
+            }
+        } else if (choice == 3) {
+            int accNum;
+            double amount;
+            cout << "Enter Account Number: ";
+            cin >> accNum;
+            cout << "Enter Amount to Withdraw: ";
+            cin >> amount;
+            for (auto &c : customers) {
+                if (c.account.accountNumber == accNum) {
+                    c.account.withdraw(amount);
+                }
+            }
+        } else if (choice == 4) {
+            int fromAcc, toAcc;
+            double amount;
+            cout << "Enter Your Account Number: ";
+            cin >> fromAcc;
+            cout << "Enter Receiver Account Number: ";
+            cin >> toAcc;
+            cout << "Enter Amount to Transfer: ";
+            cin >> amount;
+            Account *from = nullptr, *to = nullptr;
+            for (auto &c : customers) {
+                if (c.account.accountNumber == fromAcc) from = &c.account;
+                if (c.account.accountNumber == toAcc) to = &c.account;
+            }
+            if (from && to) from->transfer(*to, amount);
+            else cout << "Invalid Account Number(s)!\n";
+        } else if (choice == 5) {
+            int accNum;
+            cout << "Enter Account Number: ";
+            cin >> accNum;
+            for (auto &c : customers) {
+                if (c.account.accountNumber == accNum) {
+                    c.displayInfo();
+                }
+            }
+        } else if (choice == 6) {
+            int accNum;
+            cout << "Enter Account Number: ";
+            cin >> accNum;
+            for (auto &c : customers) {
+                if (c.account.accountNumber == accNum) {
+                    c.account.printTransactions();
+                }
+            }
+        } else if (choice == 7) {
+            cout << "Exiting...\n";
+            break;
+        } else {
+            cout << "Invalid option! Try again.\n";
+        }
+    }
+
+    return 0;
+}
